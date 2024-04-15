@@ -12,4 +12,4 @@ COPY src ./src
 RUN mvn package -DskipTests
 
 # Run the web service on container startup.
-CMD ["java","-jar","/app/target/user-center-backend-0.0.1-SNAPSHOT.jar","--spring.profiles.active=prod"]
+CMD ["java","-jar","/app/target/Y-partner-Matching-backend-0.0.1-SNAPSHOT.jar","--spring.profiles.active=prod"]
