@@ -19,4 +19,8 @@
         joinTime,createTime,updateTime,
         isDelete
     </sql>
+
+    <select id="selectOne" resultType="com.younglin.partnerMatching.model.domain.UserTeam">
+        select * from user_team where userId = #{userId} and teamId = #{teamId}
+    </select>
 </mapper>

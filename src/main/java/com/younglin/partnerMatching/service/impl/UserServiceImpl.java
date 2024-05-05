@@ -10,6 +10,8 @@ import com.younglin.partnerMatching.exception.BusinessException;
 import com.younglin.partnerMatching.model.request.UserUpdateRequest;
 import com.younglin.partnerMatching.service.UserService;
 import com.younglin.partnerMatching.mapper.UserMapper;
+import com.younglin.partnerMatching.utils.AlgorithmUtils;
+import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -18,21 +20,20 @@ import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.younglin.partnerMatching.contant.UserConstant.ADMIN_ROLE;
 import static com.younglin.partnerMatching.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * 用户服务实现类
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author
+ * @from
  */
 @Service
 @Slf4j
@@ -41,6 +42,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private UserMapper userMapper;
+
+
 
     // https://www.code-nav.cn/
 
@@ -111,8 +114,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return user.getId();
     }
 
-    // [加入星球](https://www.code-nav.cn/) 从 0 到 1 项目实战，经验拉满！10+ 原创项目手把手教程、7 日项目提升训练营、60+ 编程经验分享直播、1000+ 项目经验笔记
-
     /**
      * 用户登录
      *
@@ -149,7 +150,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 用户不存在
         if (user == null) {
             log.info("user login failed, userAccount cannot match userPassword");
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"账号或密码错误");
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "账号或密码错误");
         }
         // 3. 用户脱敏
         User safetyUser = getSafetyUser(user);
@@ -201,6 +202,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     /**
      * 根据标签查询用户
      * sql查询
+     *
      * @param tagNameList
      * @return
      */
@@ -215,10 +217,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     /**
      * 数据库查询
+     *
      * @param tagNameList
      * @return
      */
-    public List<User> sqlSearch(List<String> tagNameList){
+    public List<User> sqlSearch(List<String> tagNameList) {
         //设置开始时间
         long starTime = System.currentTimeMillis();
         //封装查询条件
@@ -239,10 +242,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     /**
      * 内存查询
+     *
      * @param tagNameList
      * @return
      */
-    public List<User> memorySearch(List<String > tagNameList){
+    public List<User> memorySearch(List<String> tagNameList) {
         long starTime = System.currentTimeMillis();
         //1.先查询所有用户
         QueryWrapper queryWrapper = new QueryWrapper();
@@ -253,16 +257,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         Gson gson = new Gson();
 
         //2.判断内存中是否包含要求的标签,过滤含有标签的用户对象
-        return userList.stream().filter(user ->{
+        return userList.stream().filter(user -> {
             String tagsStr = user.getTags();
-            if(StringUtils.isBlank(tagsStr)){
+            if (StringUtils.isBlank(tagsStr)) {
                 return false;
             }
 
-            Set<String> tempTagNameSet =  gson.fromJson(tagsStr,new TypeToken<List<User>>(){}.getType());
+            Set<String> tempTagNameSet = gson.fromJson(tagsStr, new TypeToken<List<User>>() {
+            }.getType());
             tempTagNameSet = Optional.ofNullable(tempTagNameSet).orElse(new HashSet<>());
-            for(String tagName : tagNameList){
-                if(!tempTagNameSet.contains(tagName)) {
+            for (String tagName : tagNameList) {
+                if (!tempTagNameSet.contains(tagName)) {
                     return false;
                 }
             }
@@ -292,20 +297,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     /**
      * 更新用户信息
+     *
      * @param userUpdateRequest
      * @param currentUser
      * @return
      */
     @Override
-    public int updateUser(UserUpdateRequest userUpdateRequest, User currentUser){
+    public int updateUser(UserUpdateRequest userUpdateRequest, User currentUser) {
 
 
-        if(userUpdateRequest==null){
+        if (userUpdateRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
-        if (currentUser==null){
-            throw new BusinessException(ErrorCode.NOT_LOGIN,"用户未登录");
+        if (currentUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN, "用户未登录");
         }
 
         String username = userUpdateRequest.getUsername();
@@ -313,13 +319,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String email = userUpdateRequest.getEmail();
         Integer gender = userUpdateRequest.getGender();
         String avatarUrl = userUpdateRequest.getAvatarUrl();
+        String profile = userUpdateRequest.getProfile();
 
         QueryWrapper queryWrapper = new QueryWrapper();
-        queryWrapper.eq("id",currentUser.getId());
+        queryWrapper.eq("id", currentUser.getId());
         User updateUser = userMapper.selectOne(queryWrapper);
 
         //如果前端传过来的用户数据都为空，则不更新用户数据
-        if (StringUtils.isAllBlank(username,phone,email,avatarUrl)&&gender==null){
+        if (StringUtils.isAllBlank(username, phone, email, avatarUrl, profile) && gender == null) {
             return 0;
         }
 
@@ -328,22 +335,93 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         updateUser.setEmail(email);
         updateUser.setGender(gender);
         updateUser.setAvatarUrl(avatarUrl);
+        updateUser.setProfile(profile);
 
         return userMapper.updateById(updateUser);
     }
 
     @Override
-    public List<User> getUserList(){
+    public List<User> getUserList() {
 
         QueryWrapper queryWrapper = new QueryWrapper();
 
         List<User> userList = userMapper.selectList(queryWrapper);
         //用户信息脱敏
-        userList = userList.stream().map(user ->{
+        userList = userList.stream().map(user -> {
             return getSafetyUser(user);
         }).collect(Collectors.toList());
 
         return userList;
     }
+
+    /**
+     * 是否为管理员
+     *
+     * @param request
+     * @return
+     */
+    @Override
+    public boolean isAdmin(HttpServletRequest request) {
+        // 仅管理员可查询
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User user = (User) userObj;
+        return user != null && user.getUserRole() == ADMIN_ROLE;
+    }
+
+    @Override
+    public List<User> matchUsers(long num, User currentUser) {
+        //获取当前登录用户的标签信息
+        String tags = currentUser.getTags();
+        Gson gson = new Gson();
+        List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
+        }.getType());
+
+        //查询所有用户 tags ！= null
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.isNotNull("tags").select("id", "tags");
+        List<User> userList = this.list(queryWrapper);
+
+        //用户列表的下表 =》相似度 key-value
+        List<Pair<User, Long>> list = new ArrayList<>();
+
+        //遍历用户集合userList 计算两个标签的相似度 值越小，越匹配
+        for (int i = 0; i < userList.size(); i++) {
+            User user = userList.get(i);
+            String userTags = user.getTags();
+            //过滤掉没有标签的用户，且用户为当前登录用户
+            if (userTags == null || currentUser.getId() == user.getId()) {
+                continue;
+            }
+            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
+            }.getType());
+            //计算distance 值越小相似度越高
+            long distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            list.add(new Pair<>(user, distance));
+        }
+        //对匹配到的数据进行排序，值越小越靠前 从小到大排序
+        List<Pair<User, Long>> topUserPairList = list.stream()
+                .sorted((a, b) -> (int) (a.getValue() - b.getValue()))
+                .limit(num)
+                .collect(Collectors.toList());
+        //从topUserPairList中取出已匹配的用户的id
+        List<Long> userIdList = topUserPairList.stream().map(pair -> pair.getKey().getId()).collect(Collectors.toList());
+
+        //再次根据id查询完整的脱敏用户信息
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.in("id", userIdList);
+        Map<Long, List<User>> userListMap = this.list(userQueryWrapper).stream().map(this::getSafetyUser).collect(Collectors.groupingBy(User::getId));
+
+        //因为上面查询打乱了顺序，这里根据上面有序userId列表赋值
+        List<User> finalUserList = new ArrayList<>();
+        for (Long userId : userIdList) {
+            finalUserList.add(userListMap.get(userId).get(0));
+        }
+
+
+
+        return finalUserList;
+    }
+
+
 }
 

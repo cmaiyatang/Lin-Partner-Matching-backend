@@ -10,8 +10,8 @@ import java.util.List;
 /**
  * 用户服务
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author
+ * @from
  */
 public interface UserService extends IService<User> {
 
@@ -80,4 +80,14 @@ public interface UserService extends IService<User> {
      * @return
      */
     List<User> getUserList();
+
+    boolean isAdmin(HttpServletRequest request);
+
+    /**
+     * 匹配用户 距离算法
+     * @param num
+     * @param currentUser
+     * @return
+     */
+    List<User> matchUsers(long num, User currentUser);
 }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.younglin.partnerMatching.mapper.ChatMessageMapper">
+
+    <resultMap id="BaseResultMap" type="com.younglin.partnerMatching.model.domain.ChatMessage">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="senderId" column="senderId" jdbcType="BIGINT"/>
+            <result property="recevierId" column="recevierId" jdbcType="BIGINT"/>
+            <result property="message" column="message" jdbcType="VARCHAR"/>
+            <result property="sendTime" column="sendTime" jdbcType="TIMESTAMP"/>
+            <result property="unRead" column="unRead" jdbcType="INTEGER"/>
+            <result property="type" column="type" jdbcType="INTEGER"/>
+            <result property="isLatest" column="isLatest" jdbcType="TINYINT"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,senderId,recevierId,
+        message,sendTime,unRead,
+        type,isLatest,createTime,
+        updateTime,isDelete
+    </sql>
+</mapper>

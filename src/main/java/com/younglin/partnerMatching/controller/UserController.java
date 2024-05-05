@@ -24,14 +24,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.younglin.partnerMatching.contant.UserConstant.ADMIN_ROLE;
-import static com.younglin.partnerMatching.contant.UserConstant.USER_LOGIN_STATE;
-
 /**
  * 用户接口
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author
+ * @from
  */
 @RestController
 @RequestMapping("/user")
@@ -100,6 +97,7 @@ public class UserController {
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+
         int result = userService.userLogout(request);
         return ResultUtils.success(result);
     }
@@ -113,7 +111,7 @@ public class UserController {
      */
     @GetMapping("/search")
     public BaseResponse<List<User>> searchUsers(String username, HttpServletRequest request) {
-        if (!isAdmin(request)) {
+        if (!userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH, "缺少管理员权限");
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -134,7 +132,7 @@ public class UserController {
      */
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteUser(@RequestBody long id, HttpServletRequest request) {
-        if (!isAdmin(request)) {
+        if (!userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
         if (id <= 0) {
@@ -199,33 +197,19 @@ public class UserController {
         return ResultUtils.success(currentUser);
     }
 
-    /**
-     * 是否为管理员
-     *
-     * @param request
-     * @return
-     */
-    private boolean isAdmin(HttpServletRequest request) {
-        // 仅管理员可查询
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User user = (User) userObj;
-        return user != null && user.getUserRole() == ADMIN_ROLE;
-    }
-
-
     @GetMapping("/recommendUser")
     public BaseResponse<Page<List<User>>> getUserList(int pageSize, int pageNumber, HttpServletRequest request) {
         User currentLoginUser = userService.getCurrentUser(request);
 
         //设置rediskey
-        String userRedisKey = String.format("redisKey:user:recommend:%s", currentLoginUser.getId());
+        String userRedisKey = String.format("redisKey:user:recommend:%s:pageNumber:%d", currentLoginUser.getId(), pageNumber);
         ValueOperations valueOperations = redisTemplate.opsForValue();
 
         //从缓存中读取数据
         Page<List<User>> userPage = (Page<List<User>>) valueOperations.get(userRedisKey);
 
         //如果有缓存，则直接从缓存中取出数据
-        if (userPage!=null){
+        if (userPage != null) {
             return ResultUtils.success(userPage);
         }
 
@@ -235,13 +219,48 @@ public class UserController {
 
         //写缓存，30s过期
         try {
-            valueOperations.set(userRedisKey, userPage,30000, TimeUnit.MILLISECONDS);
-        }catch (Exception e){
-            log.error("redis set key error",e);
+            valueOperations.set(userRedisKey, userPage, 30000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.error("redis set key error", e);
         }
 
         return ResultUtils.success(userPage);
     }
 
+    /**
+     * 距离算法 匹配用户
+     *
+     * @param num
+     * @param request
+     * @return
+     */
+    @GetMapping("/match")
+    public BaseResponse<List<User>> matchUsers(long num, HttpServletRequest request) {
+        if (num <= 0 || num > 20) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        //获得当前的登录用户
+        User currentUser = userService.getCurrentUser(request);
+
+        String matchUserRedisKey = String.format("redisKey:user:matchUsers:%d", currentUser.getId());
+        ValueOperations valueOperations = redisTemplate.opsForValue();
+        List<User> matchUsers = (List<User>) valueOperations.get(matchUserRedisKey);
+
+        if (matchUsers != null) {
+            return ResultUtils.success(matchUsers);
+        }
+
+        //如果没有缓存中没有数据 查询匹配用户
+        matchUsers = userService.matchUsers(num, currentUser);
+        //写缓存，30s过期
+        try {
+            valueOperations.set(matchUserRedisKey, matchUsers, 30000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.error("redis set key error", e);
+        }
+
+        return ResultUtils.success(matchUsers);
+
+    }
 
 }
