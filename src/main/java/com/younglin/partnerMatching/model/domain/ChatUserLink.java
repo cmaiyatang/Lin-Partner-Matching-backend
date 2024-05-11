@@ -25,12 +25,12 @@ public class ChatUserLink implements Serializable {
     /**
      * 消息发送用户id
      */
-    private Long senderId;
+    private Long userId;
 
     /**
      * 消息接收用户id
      */
-    private Long recevierId;
+    private Long friendId;
 
     /**
      * 创建时间

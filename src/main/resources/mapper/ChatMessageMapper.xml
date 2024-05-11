@@ -6,22 +6,18 @@
 
     <resultMap id="BaseResultMap" type="com.younglin.partnerMatching.model.domain.ChatMessage">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="senderId" column="senderId" jdbcType="BIGINT"/>
-            <result property="recevierId" column="recevierId" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="friendId" column="friendId" jdbcType="BIGINT"/>
             <result property="message" column="message" jdbcType="VARCHAR"/>
             <result property="sendTime" column="sendTime" jdbcType="TIMESTAMP"/>
-            <result property="unRead" column="unRead" jdbcType="INTEGER"/>
-            <result property="type" column="type" jdbcType="INTEGER"/>
-            <result property="isLatest" column="isLatest" jdbcType="TINYINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,senderId,recevierId,
-        message,sendTime,unRead,
-        type,isLatest,createTime,
+        id,userId,friendId,
+        message,sendTime,createTime,
         updateTime,isDelete
     </sql>
 </mapper>

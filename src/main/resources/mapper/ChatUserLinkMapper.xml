@@ -6,15 +6,15 @@
 
     <resultMap id="BaseResultMap" type="com.younglin.partnerMatching.model.domain.ChatUserLink">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="senderId" column="senderId" jdbcType="BIGINT"/>
-            <result property="recevierId" column="recevierId" jdbcType="BIGINT"/>
+            <result property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="friendId" column="friendId" jdbcType="BIGINT"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,senderId,recevierId,
+        id,userId,friendId,
         createTime,updateTime,isDelete
     </sql>
 </mapper>

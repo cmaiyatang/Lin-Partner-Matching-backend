@@ -4,16 +4,20 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.younglin.partnerMatching.model.domain.User;
 import com.younglin.partnerMatching.common.ErrorCode;
 import com.younglin.partnerMatching.exception.BusinessException;
-import com.younglin.partnerMatching.model.request.UserUpdateRequest;
-import com.younglin.partnerMatching.service.UserService;
 import com.younglin.partnerMatching.mapper.UserMapper;
+import com.younglin.partnerMatching.model.domain.ChatUserLink;
+import com.younglin.partnerMatching.model.domain.User;
+import com.younglin.partnerMatching.model.request.UserRequest.UserUpdateRequest;
+import com.younglin.partnerMatching.model.vo.UserVo;
+import com.younglin.partnerMatching.service.ChatUserLinkService;
+import com.younglin.partnerMatching.service.UserService;
 import com.younglin.partnerMatching.utils.AlgorithmUtils;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
@@ -24,7 +28,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.younglin.partnerMatching.contant.UserConstant.ADMIN_ROLE;
 import static com.younglin.partnerMatching.contant.UserConstant.USER_LOGIN_STATE;
@@ -43,6 +46,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Resource
     private UserMapper userMapper;
 
+    @Resource
+    private ChatUserLinkService chatUserLinkService;
 
 
     // https://www.code-nav.cn/
@@ -155,7 +160,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 3. 用户脱敏
         User safetyUser = getSafetyUser(user);
         // 4. 记录用户的登录态
+
         request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
+
         return safetyUser;
     }
 
@@ -283,6 +290,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     @Override
     public User getCurrentUser(HttpServletRequest request) {
+
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User) userObj;
         if (currentUser == null) {
@@ -418,8 +426,46 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
 
 
-
         return finalUserList;
+    }
+
+    @Override
+    public List<UserVo> searchFriends(Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+
+        QueryWrapper<ChatUserLink> linkQueryWrapper = new QueryWrapper<>();
+        linkQueryWrapper.eq("userId", userId);
+        List<ChatUserLink> links = chatUserLinkService.list(linkQueryWrapper);
+        if (links == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "还未有小伙伴哦");
+        }
+        //拿到所有伙伴的id
+        List<Long> friendIdList = links.stream().map(ChatUserLink::getFriendId).collect(Collectors.toList());
+
+        //查询伙伴
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.in("id", friendIdList);
+        List<User> friends = this.list(userQueryWrapper);
+        if (CollectionUtils.isEmpty(friends)) {
+            throw new BusinessException(ErrorCode.NULL_ERROR, "还未有小伙伴哦");
+        }
+
+        // 遍历 friends 集合，并转换为 UserVo 对象
+        List<UserVo> friendUserVoList = new ArrayList<>();
+        for (User friend : friends) {
+            // 创建新的 UserVo 对象
+            UserVo friendUserVo = new UserVo();
+
+            // 复制 friend 对象的属性到 friendUserVo 对象
+            BeanUtils.copyProperties(friend, friendUserVo);
+
+            // 将转换后的 UserVo 对象添加到列表中
+            friendUserVoList.add(friendUserVo);
+        }
+
+        return friendUserVoList;
     }
 
 

@@ -1,7 +1,7 @@
-package com.younglin.partnerMatching.model.request;
-
+package com.younglin.partnerMatching.model.request.TeamRequest;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
@@ -10,12 +10,19 @@ import java.util.Date;
 
 
 /**
- * 用户加入队伍数据请求体
+ * 新增队伍请求体
  */
 @Data
-public class TeamJoinRequest {
+public class TeamAddRequest {
+    /**
+     * 队伍名称
+     */
+    private String teamName;
 
-    private Long teamId;
+    /**
+     * 队伍描述
+     */
+    private String description;
 
     /**
      * 队伍最大人数
@@ -26,11 +33,6 @@ public class TeamJoinRequest {
      * 过期时间
      */
     private Date expireTime;
-
-    /**
-     * 用户id
-     */
-    private Long userId;
 
     /**
      * 0-公开，1-私有，2-加密

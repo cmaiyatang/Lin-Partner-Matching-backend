@@ -1,5 +1,6 @@
 package com.younglin.partnerMatching.model.dto;
 
+
 import com.younglin.partnerMatching.model.request.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

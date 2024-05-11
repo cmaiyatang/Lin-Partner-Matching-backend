@@ -1,16 +1,18 @@
 package com.younglin.partnerMatching.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.younglin.partnerMatching.common.ResultUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.younglin.partnerMatching.common.BaseResponse;
 import com.younglin.partnerMatching.common.ErrorCode;
+import com.younglin.partnerMatching.common.ResultUtils;
 import com.younglin.partnerMatching.exception.BusinessException;
 import com.younglin.partnerMatching.model.domain.User;
-import com.younglin.partnerMatching.model.request.UserLoginRequest;
-import com.younglin.partnerMatching.model.request.UserRegisterRequest;
-import com.younglin.partnerMatching.model.request.UserUpdateRequest;
+import com.younglin.partnerMatching.model.request.UserRequest.UserLoginRequest;
+import com.younglin.partnerMatching.model.request.UserRequest.UserRegisterRequest;
+import com.younglin.partnerMatching.model.request.UserRequest.UserUpdateRequest;
+import com.younglin.partnerMatching.model.vo.UserVo;
+import com.younglin.partnerMatching.service.ChatUserLinkService;
 import com.younglin.partnerMatching.service.UserService;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -38,6 +40,9 @@ public class UserController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private ChatUserLinkService chatUserLinkService;
 
     @Resource
     private RedisTemplate redisTemplate;
@@ -263,4 +268,23 @@ public class UserController {
 
     }
 
+    /**
+     * 查询伙伴
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/friends")
+    public BaseResponse<List<UserVo>> searchFriends(HttpServletRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        User currentUser = userService.getCurrentUser(request);
+
+        Long userId = currentUser.getId();
+        //todo 设计伙伴缓存
+        List<UserVo> friends = userService.searchFriends(userId);
+
+        return ResultUtils.success(friends);
+    }
 }

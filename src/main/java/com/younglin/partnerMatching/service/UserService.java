@@ -2,7 +2,8 @@ package com.younglin.partnerMatching.service;
 
 import com.younglin.partnerMatching.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.younglin.partnerMatching.model.request.UserUpdateRequest;
+import com.younglin.partnerMatching.model.request.UserRequest.UserUpdateRequest;
+import com.younglin.partnerMatching.model.vo.UserVo;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -90,4 +91,10 @@ public interface UserService extends IService<User> {
      * @return
      */
     List<User> matchUsers(long num, User currentUser);
+
+    /**
+     * 查询伙伴
+     * @return
+     */
+    List<UserVo> searchFriends(Long userId);
 }

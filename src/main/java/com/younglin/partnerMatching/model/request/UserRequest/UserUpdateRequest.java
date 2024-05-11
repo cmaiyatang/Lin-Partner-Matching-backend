@@ -1,4 +1,4 @@
-package com.younglin.partnerMatching.model.request;
+package com.younglin.partnerMatching.model.request.UserRequest;
 
 import lombok.Data;
 

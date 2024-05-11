@@ -6,11 +6,10 @@ import com.younglin.partnerMatching.model.domain.Team;
 import com.younglin.partnerMatching.model.domain.User;
 import com.younglin.partnerMatching.model.dto.SearchTeamDto;
 import com.younglin.partnerMatching.model.request.DeleteRequest;
-import com.younglin.partnerMatching.model.request.TeamJoinRequest;
-import com.younglin.partnerMatching.model.request.TeamUpdateRequest;
+import com.younglin.partnerMatching.model.request.TeamRequest.TeamJoinRequest;
+import com.younglin.partnerMatching.model.request.TeamRequest.TeamUpdateRequest;
 import com.younglin.partnerMatching.model.vo.TeamUserVo;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**

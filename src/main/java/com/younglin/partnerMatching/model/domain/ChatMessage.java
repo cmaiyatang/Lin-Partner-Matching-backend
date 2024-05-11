@@ -25,12 +25,12 @@ public class ChatMessage implements Serializable {
     /**
      * 消息发送用户id
      */
-    private Long senderId;
+    private Long userId;
 
     /**
      * 消息接收用户id
      */
-    private Long recevierId;
+    private Long friendId;
 
     /**
      * 消息接收用户id
@@ -42,20 +42,6 @@ public class ChatMessage implements Serializable {
      */
     private Date sendTime;
 
-    /**
-     * 消息未读数
-     */
-    private Integer unRead;
-
-    /**
-     * 消息类型 
-     */
-    private Integer type;
-
-    /**
-     * 是否是最后一条
-     */
-    private Integer isLatest;
 
     /**
      * 创建时间

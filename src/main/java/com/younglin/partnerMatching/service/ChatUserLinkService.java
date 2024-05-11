@@ -2,6 +2,7 @@ package com.younglin.partnerMatching.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.younglin.partnerMatching.model.domain.ChatUserLink;
+import com.younglin.partnerMatching.model.request.ChatRequest.ChatDeleteRequest;
 
 /**
 * @author chenyanglin
@@ -10,4 +11,10 @@ import com.younglin.partnerMatching.model.domain.ChatUserLink;
 */
 public interface ChatUserLinkService extends IService<ChatUserLink> {
 
+    /**
+     * 删除用户聊天关系
+     * @param chatDeleteRequest
+     * @return
+     */
+    boolean deleteConnection(ChatDeleteRequest chatDeleteRequest);
 }

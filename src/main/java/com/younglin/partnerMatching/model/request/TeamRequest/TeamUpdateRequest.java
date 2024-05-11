@@ -1,4 +1,4 @@
-package com.younglin.partnerMatching.model.request;
+package com.younglin.partnerMatching.model.request.TeamRequest;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
