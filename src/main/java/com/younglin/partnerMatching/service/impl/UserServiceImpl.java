@@ -1,11 +1,13 @@
 package com.younglin.partnerMatching.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.younglin.partnerMatching.common.ErrorCode;
 import com.younglin.partnerMatching.exception.BusinessException;
+import com.younglin.partnerMatching.manager.SessionManager;
 import com.younglin.partnerMatching.mapper.UserMapper;
 import com.younglin.partnerMatching.model.domain.ChatUserLink;
 import com.younglin.partnerMatching.model.domain.User;
@@ -24,13 +26,14 @@ import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.younglin.partnerMatching.contant.RedisKeyConstant.USER_LOGIN_STATE;
 import static com.younglin.partnerMatching.contant.UserConstant.ADMIN_ROLE;
-import static com.younglin.partnerMatching.contant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * 用户服务实现类
@@ -49,6 +52,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Resource
     private ChatUserLinkService chatUserLinkService;
 
+    @Resource
+    private SessionManager sessionManager;
+
 
     // https://www.code-nav.cn/
 
@@ -63,13 +69,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * @param userAccount   用户账户
      * @param userPassword  用户密码
      * @param checkPassword 校验密码
-     * @param planetCode    星球编号
      * @return 新用户 id
      */
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword, String planetCode) {
+    public long userRegister(String userAccount, String userPassword, String checkPassword) {
         // 1. 校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, planetCode)) {
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         if (userAccount.length() < 4) {
@@ -77,9 +82,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         if (userPassword.length() < 8 || checkPassword.length() < 8) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
-        }
-        if (planetCode.length() > 5) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "星球编号过长");
         }
         // 账户不能包含特殊字符
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
@@ -98,20 +100,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (count > 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
         }
-        // 星球编号不能重复
-        queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("planetCode", planetCode);
-        count = userMapper.selectCount(queryWrapper);
-        if (count > 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "编号重复");
-        }
+//        // 星球编号不能重复
+//        queryWrapper = new QueryWrapper<>();
+//        queryWrapper.eq("planetCode", planetCode);
+//        count = userMapper.selectCount(queryWrapper);
+//        if (count > 0) {
+//            throw new BusinessException(ErrorCode.PARAMS_ERROR, "编号重复");
+//        }
         // 2. 加密
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
         // 3. 插入数据
         User user = new User();
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
-        user.setPlanetCode(planetCode);
         boolean saveResult = this.save(user);
         if (!saveResult) {
             return -1;
@@ -161,7 +162,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         User safetyUser = getSafetyUser(user);
         // 4. 记录用户的登录态
 
-        request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
+
+        //实现单设备多端登录，禁止多设备登录
+        try {
+            sessionManager.login(safetyUser, request);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
 
         return safetyUser;
     }
@@ -185,7 +192,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safetyUser.setGender(originUser.getGender());
         safetyUser.setPhone(originUser.getPhone());
         safetyUser.setEmail(originUser.getEmail());
-        safetyUser.setPlanetCode(originUser.getPlanetCode());
         safetyUser.setUserRole(originUser.getUserRole());
         safetyUser.setStatus(originUser.getStatus());
         safetyUser.setCreateTime(originUser.getCreateTime());
@@ -376,6 +382,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return user != null && user.getUserRole() == ADMIN_ROLE;
     }
 
+    /**
+     * 匹配用户
+     *
+     * @param num
+     * @param currentUser
+     * @return
+     */
     @Override
     public List<User> matchUsers(long num, User currentUser) {
         //获取当前登录用户的标签信息
@@ -429,44 +442,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return finalUserList;
     }
 
-    @Override
-    public List<UserVo> searchFriends(Long userId) {
-        if (userId == null) {
-            throw new BusinessException(ErrorCode.NULL_ERROR);
-        }
-
-        QueryWrapper<ChatUserLink> linkQueryWrapper = new QueryWrapper<>();
-        linkQueryWrapper.eq("userId", userId);
-        List<ChatUserLink> links = chatUserLinkService.list(linkQueryWrapper);
-        if (links == null) {
-            throw new BusinessException(ErrorCode.NULL_ERROR, "还未有小伙伴哦");
-        }
-        //拿到所有伙伴的id
-        List<Long> friendIdList = links.stream().map(ChatUserLink::getFriendId).collect(Collectors.toList());
-
-        //查询伙伴
-        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-        userQueryWrapper.in("id", friendIdList);
-        List<User> friends = this.list(userQueryWrapper);
-        if (CollectionUtils.isEmpty(friends)) {
-            throw new BusinessException(ErrorCode.NULL_ERROR, "还未有小伙伴哦");
-        }
-
-        // 遍历 friends 集合，并转换为 UserVo 对象
-        List<UserVo> friendUserVoList = new ArrayList<>();
-        for (User friend : friends) {
-            // 创建新的 UserVo 对象
-            UserVo friendUserVo = new UserVo();
-
-            // 复制 friend 对象的属性到 friendUserVo 对象
-            BeanUtils.copyProperties(friend, friendUserVo);
-
-            // 将转换后的 UserVo 对象添加到列表中
-            friendUserVoList.add(friendUserVo);
-        }
-
-        return friendUserVoList;
-    }
 
 
 }

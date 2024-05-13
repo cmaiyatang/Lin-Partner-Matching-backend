@@ -41,7 +41,6 @@ public class InsertUserTest {
             user.setEmail("gibsonsybil48@gmail.com");
             user.setStatus(0);
             user.setUserRole(0);
-            user.setPlanetCode("119");
             user.setTags("[]");
             userList.add(user);
         }
@@ -79,7 +78,6 @@ public class InsertUserTest {
                 user.setEmail("gibsonsybil48@gmail.com");
                 user.setStatus(0);
                 user.setUserRole(0);
-                user.setPlanetCode("119");
                 user.setTags("[]");
                 userList.add(user);
                 if (j % batchSize == 0) {

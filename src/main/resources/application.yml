@@ -5,7 +5,7 @@ spring:
   # DataSource Config
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/younglin
+    url: jdbc:mysql://localhost:3306/younglin?charset='utf8mb4'
     username: root
     password: 123456
   # session 失效时间

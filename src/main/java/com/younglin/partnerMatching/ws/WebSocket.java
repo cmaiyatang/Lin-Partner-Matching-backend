@@ -13,6 +13,7 @@ import com.younglin.partnerMatching.service.ChatMessageService;
 import com.younglin.partnerMatching.service.ChatUserLinkService;
 import com.younglin.partnerMatching.utils.GetHttpSessionUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -24,16 +25,15 @@ import javax.servlet.http.HttpSession;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static com.younglin.partnerMatching.contant.UserConstant.USER_LOGIN_STATE;
+import static com.younglin.partnerMatching.contant.RedisKeyConstant.USER_LOGIN_STATE;
 
 
 @Component
 @Slf4j
-@ServerEndpoint(value = "/websocket/{friendId}", configurator = GetHttpSessionUtil.class)
+@ServerEndpoint(value = "/websocket/{friendId}/{teamId}", configurator = GetHttpSessionUtil.class)
 public class WebSocket implements ApplicationContextAware {
     @Resource
     private ChatUserLinkService chatUserLinkService;
@@ -49,8 +49,20 @@ public class WebSocket implements ApplicationContextAware {
         WebSocket.applicationContext = applicationContext;
     }
 
-    //用来记录当前登录用户id和该session进行绑定
-    private static Map<Long, Session> map = new HashMap<Long, Session>();
+
+    /**
+     * 用来记录当前登录用户id和该session进行绑定
+     */
+    private static final Map<String, Session> SESSIONS = new HashMap<String, Session>();
+
+    /**
+     * 记录队伍的连接信息
+     * 服务器维护队伍的 WebSocket 连接：
+     * 服务器创建一个 WebSocket 连接来代表整个队伍或房间，该连接可以被所有成员共享和使用。
+     */
+    private static final Map<String, ConcurrentHashMap<String, WebSocket>> TEAMROOMS = new HashMap<>();
+
+    //todo 房间在线人数
 
     private HttpSession httpSession;
 
@@ -60,7 +72,7 @@ public class WebSocket implements ApplicationContextAware {
      * 连接建立成功调用的方法，初始化昵称、session
      */
     @OnOpen
-    public void onOpen(Session session, EndpointConfig config, @PathParam(value = "friendId") Long friendId) {
+    public void onOpen(Session session, EndpointConfig config, @PathParam(value = "friendId") String friendId, @PathParam(value = "teamId") String teamId) {
         // 连接创建的时候，从 ApplicationContext 获取到 Bean 进行初始化
         chatUserLinkService = WebSocket.applicationContext.getBean(ChatUserLinkService.class);
         chatMessageService = WebSocket.applicationContext.getBean(ChatMessageService.class);
@@ -70,11 +82,20 @@ public class WebSocket implements ApplicationContextAware {
         currentUser = (User) httpSession.getAttribute(USER_LOGIN_STATE);
         Long curUserId = currentUser.getId();
 
-        //将用户id和当前websocket session存储起来
-        map.put(curUserId, session);
+        //判断是队伍聊天还是好友聊天
+        if (!"NaN".equals(teamId)) {
+            //队伍聊天
+            ConcurrentHashMap<String,WebSocket> teamRoom = new ConcurrentHashMap<>();
+            TEAMROOMS.put(String.valueOf(curUserId),teamRoom);
 
-        //保存用户-friend表连接数据
-        this.setConnectFriends(curUserId, friendId);
+            log.info("队伍聊天开启");
+        } else {
+            //将用户id和当前websocket session存储起来
+            SESSIONS.put(String.valueOf(curUserId), session);
+            //保存用户-friend表连接数据
+            this.setConnectFriends(curUserId, Long.valueOf(friendId));
+        }
+
 
     }
 
@@ -86,9 +107,15 @@ public class WebSocket implements ApplicationContextAware {
      */
     @OnMessage
     public void onMessage(String message) {
-        if (message == null || message == "") {
+        if (Objects.equals(message, "ping")) {
+            return;
+        }
+        if (StringUtils.isBlank(message)) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
+
+
+
         Long userId = currentUser.getId();
         //将message转换为ChatMessage对象
         log.info("服务端收到用户username={}的消息:{}", userId, message);
@@ -96,7 +123,7 @@ public class WebSocket implements ApplicationContextAware {
         MessageSendRequest messageRequest = new Gson().fromJson(message, MessageSendRequest.class);
         String sendMessage = messageRequest.getMessage();
         Long friendId = messageRequest.getFriendId();
-        Session session = map.get(friendId);
+        Session session = SESSIONS.get(String.valueOf(friendId));
         if (session != null) {
             try {
                 //通过方法获取到WebSocketVO对象
@@ -106,11 +133,14 @@ public class WebSocket implements ApplicationContextAware {
                 String messageResultToJson = new Gson().toJson(messageResult);
 
                 session.getBasicRemote().sendText(messageResultToJson);
+                log.info("发送给用户username={}，消息：{}", messageRequest.getFriendId(), messageResult.getMessage());
 
             } catch (Exception e) {
                 e.printStackTrace();
                 log.info("发送消息出错啦！！");
             }
+        } else {
+            log.info("用户id：{}不在线或系统异常", friendId);
         }
 
         //将消息保存到数据库
@@ -130,8 +160,7 @@ public class WebSocket implements ApplicationContextAware {
     @OnClose
     public void onClose() {
 
-
-        map.remove(this);  //从set中删除
+        SESSIONS.remove(this);  //从set中删除
     }
 
     /**
@@ -162,18 +191,33 @@ public class WebSocket implements ApplicationContextAware {
         linkQueryWrapper.eq("friendId", friendId);
 
         ChatUserLink one = chatUserLinkService.getOne(linkQueryWrapper);
+
+        QueryWrapper<ChatUserLink> linkQueryWrapper1 = new QueryWrapper<>();
+        linkQueryWrapper1.eq("userId", friendId);
+        linkQueryWrapper1.eq("friendId", curUserId);
+
+        ChatUserLink oneChange = chatUserLinkService.getOne(linkQueryWrapper);
+
         if (one == null) {
-            //保存连接信息到chat-user-link表
             chatUserLinkService.save(chatUserLink);
-
-            linkQueryWrapper.eq("userId", friendId);
-            linkQueryWrapper.eq("friendId", curUserId);
-            ChatUserLink anotherOne = chatUserLinkService.getOne(linkQueryWrapper);
-            if (anotherOne == null) {
-                chatUserLinkService.save(chatUserLinkChange);
-            }
-
         }
+        if (oneChange == null) {
+            chatUserLinkService.save(chatUserLinkChange);
+        }
+
+
+//        if (one == null) {
+//            //保存连接信息到chat-user-link表
+//            chatUserLinkService.save(chatUserLink);
+//
+//            linkQueryWrapper.eq("userId", friendId);
+//            linkQueryWrapper.eq("friendId", curUserId);
+//            ChatUserLink anotherOne = chatUserLinkService.getOne(linkQueryWrapper);
+//            if (anotherOne == null) {
+//                chatUserLinkService.save(chatUserLinkChange);
+//            }
+//        }
+
 
     }
 

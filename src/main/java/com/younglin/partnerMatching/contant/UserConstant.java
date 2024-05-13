@@ -8,11 +8,6 @@ package com.younglin.partnerMatching.contant;
  */
 public interface UserConstant {
 
-    /**
-     * 用户登录态键
-     */
-    String USER_LOGIN_STATE = "userLoginState";
-
     //  ------- 权限 --------
 
     /**

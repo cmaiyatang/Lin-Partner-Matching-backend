@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * 用户数据视图类
@@ -47,11 +48,6 @@ public class UserVo {
     private String email;
 
     /**
-     * 星球编号
-     */
-    private String planetCode;
-
-    /**
      * 标签列表
      */
     private String tags;
@@ -59,4 +55,9 @@ public class UserVo {
      * 个人简介
      */
     private String profile;
+
+    /**
+     * 好友id
+     */
+    private String friendIds;
 }
