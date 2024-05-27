@@ -8,7 +8,7 @@ import com.younglin.partnerMatching.model.dto.SearchTeamDto;
 import com.younglin.partnerMatching.model.request.DeleteRequest;
 import com.younglin.partnerMatching.model.request.TeamRequest.TeamJoinRequest;
 import com.younglin.partnerMatching.model.request.TeamRequest.TeamUpdateRequest;
-import com.younglin.partnerMatching.model.vo.TeamUserVo;
+import com.younglin.partnerMatching.model.vo.TeamUserVO;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public interface TeamService extends IService<Team> {
      * @param searchTeamDto
      * @return
      */
-    IPage<TeamUserVo> searchTeams(SearchTeamDto searchTeamDto, Boolean isAdmin);
+    IPage<TeamUserVO> searchTeams(SearchTeamDto searchTeamDto, Boolean isAdmin);
 
     /**
      * 修改队伍信息
@@ -85,6 +85,6 @@ public interface TeamService extends IService<Team> {
      * @param myJoinTeamList
      * @return
      */
-    List<TeamUserVo> setHasJoinNum(List<TeamUserVo> myJoinTeamList);
+    List<TeamUserVO> setHasJoinNum(List<TeamUserVO> myJoinTeamList);
 }
 

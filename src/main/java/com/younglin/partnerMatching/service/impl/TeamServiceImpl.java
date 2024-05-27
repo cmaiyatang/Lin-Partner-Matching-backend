@@ -19,8 +19,8 @@ import com.younglin.partnerMatching.model.dto.SearchTeamDto;
 import com.younglin.partnerMatching.model.request.DeleteRequest;
 import com.younglin.partnerMatching.model.request.TeamRequest.TeamJoinRequest;
 import com.younglin.partnerMatching.model.request.TeamRequest.TeamUpdateRequest;
-import com.younglin.partnerMatching.model.vo.TeamUserVo;
-import com.younglin.partnerMatching.model.vo.UserVo;
+import com.younglin.partnerMatching.model.vo.TeamUserVO;
+import com.younglin.partnerMatching.model.vo.UserVO;
 import com.younglin.partnerMatching.service.TeamService;
 import com.younglin.partnerMatching.service.UserService;
 import com.younglin.partnerMatching.service.UserTeamService;
@@ -191,7 +191,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
      * @return
      */
     @Override
-    public IPage<TeamUserVo> searchTeams(SearchTeamDto searchTeamDto, Boolean isAdmin) {
+    public IPage<TeamUserVO> searchTeams(SearchTeamDto searchTeamDto, Boolean isAdmin) {
 
         QueryWrapper<Team> queryWrapper = new QueryWrapper<>();
         // 组合查询条件
@@ -290,23 +290,23 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         IPage<Team> teamPage = this.page(page, queryWrapper);
 
         // 将查询到的 Team 转换为 TeamUserVo，并关联创建人信息
-        List<TeamUserVo> teamUserVoList = teamPage.getRecords().stream().map(team -> {
+        List<TeamUserVO> teamUserVOList = teamPage.getRecords().stream().map(team -> {
             Long creater = team.getUserId();
             QueryWrapper<User> userWrapper = new QueryWrapper<>();
             userWrapper.eq("id", creater);
             User user = userMapper.selectOne(userWrapper);
-            UserVo userVo = new UserVo();
+            UserVO userVo = new UserVO();
             BeanUtils.copyProperties(user, userVo);
-            TeamUserVo teamUserVo = new TeamUserVo();
+            TeamUserVO teamUserVo = new TeamUserVO();
             BeanUtils.copyProperties(team, teamUserVo);
             teamUserVo.setCreateUser(userVo);
             return teamUserVo;
         }).collect(Collectors.toList());
 
         // 将查询结果封装成 IPage<TeamUserVo> 对象并返回
-        IPage<TeamUserVo> resultPage = new Page<>();
+        IPage<TeamUserVO> resultPage = new Page<>();
         BeanUtils.copyProperties(teamPage, resultPage);
-        resultPage.setRecords(teamUserVoList);
+        resultPage.setRecords(teamUserVOList);
 
         return resultPage;
 
@@ -480,7 +480,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                     QueryWrapper<UserTeam> queryWrapper = new QueryWrapper();
                     queryWrapper.eq("teamId", teamId).isNotNull("userId");
                     Long userCount = userTeamMapper.selectCount(queryWrapper);
-                    if (userCount >= 5) {
+                    if (userCount >= team.getMaxNum()) {
                         throw new BusinessException(ErrorCode.SYSTEM_ERROR, "队伍人数已满呢~");
                     }
 
@@ -701,10 +701,10 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
      * @return
      */
     @Override
-    public List<TeamUserVo> setHasJoinNum(List<TeamUserVo> teamList) {
+    public List<TeamUserVO> setHasJoinNum(List<TeamUserVO> teamList) {
 
         //获取队伍id
-        List<Long> teamIdList = teamList.stream().map(TeamUserVo::getId).collect(Collectors.toList());
+        List<Long> teamIdList = teamList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
 
         //根据id查询每个队伍已加入的人数
         QueryWrapper<UserTeam> userInTeamNumberWrapper = new QueryWrapper<>();

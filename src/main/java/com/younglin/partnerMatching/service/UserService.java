@@ -3,7 +3,7 @@ package com.younglin.partnerMatching.service;
 import com.younglin.partnerMatching.model.domain.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.younglin.partnerMatching.model.request.UserRequest.UserUpdateRequest;
-import com.younglin.partnerMatching.model.vo.UserVo;
+import com.younglin.partnerMatching.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -57,7 +57,7 @@ public interface UserService extends IService<User> {
      * @param tagNameList
      * @return
      */
-    List<User> searchUserByTags(List<String> tagNameList);
+    List<UserVO> searchUserByTags(List<String> tagNameList);
 
 
     /**

@@ -1,18 +1,12 @@
 package com.younglin.partnerMatching.model.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * 用户数据视图类
  */
 @Data
-public class UserVo {
+public class UserVO {
     /**
      * id
      */

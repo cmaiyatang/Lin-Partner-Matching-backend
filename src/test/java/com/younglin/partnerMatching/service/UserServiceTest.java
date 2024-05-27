@@ -3,6 +3,7 @@ package com.younglin.partnerMatching.service;
 // [编程学习交流圈](https://www.code-nav.cn/) 连接万名编程爱好者，一起优秀！20000+ 小伙伴交流分享、40+ 大厂嘉宾一对一答疑、100+ 各方向编程交流群、4000+ 编程问答参考
 
 import com.younglin.partnerMatching.model.domain.User;
+import com.younglin.partnerMatching.model.vo.UserVO;
 import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -122,7 +123,7 @@ public class UserServiceTest {
     @Test
     void testSearchUserByTags() {
         List<String> tagNameList = Arrays.asList("Java", "Python");
-        List<User> userList = userService.searchUserByTags(tagNameList);
+        List<UserVO> userList = userService.searchUserByTags(tagNameList);
         Assert.assertNotNull(userList);
     }
 

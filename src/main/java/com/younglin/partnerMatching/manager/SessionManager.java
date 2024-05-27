@@ -18,9 +18,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.younglin.partnerMatching.contant.RedisKeyConstant.*;
+import static net.sf.jsqlparser.parser.feature.Feature.delete;
+import static net.sf.jsqlparser.parser.feature.Feature.use;
 
 @Component
 @Slf4j
@@ -81,38 +84,57 @@ public class SessionManager {
      * @return
      */
     public String checkOtherLogin(Long userId, String currentIp, HttpServletRequest request) {
-        //拿到以前的sessionId  校验sessionId
-        Object oldSessionObj =
-                stringRedisTemplate.opsForHash()
-                        .get(RedisKeyUtil.getUserExtraInfoKey(userId), SESSION_ID);
-        String oldSessionId = null;
-
-        if (oldSessionObj != null) {
-            oldSessionId = oldSessionObj.toString();
-        }
-
-        //拿到以前的Ip   校验ip
-        Object oldIpObj = stringRedisTemplate.opsForHash().get(RedisKeyUtil.getUserExtraInfoKey(userId), IP);
-        String oldIp = null;
-
-        if (oldIpObj != null) {
-            oldIp = oldIpObj.toString();
-        }
-
-        //判断 sessionId 如果
-        //      为空或相等 返回null
-        //      不相等，判断ip 如果
-        //          为空或相等，返回null
-        //          不相等，返回 oldSessionId
-        if (StringUtils.isBlank(oldSessionId) || oldSessionId.equals(request.getSession().getId())) {
+//        //拿到以前的sessionId  校验sessionId
+//        Object oldSessionObj =
+//                stringRedisTemplate.opsForHash()
+//                        .get(RedisKeyUtil.getUserExtraInfoKey(userId), SESSION_ID);
+//        String oldSessionId = null;
+//
+//        if (oldSessionObj != null) {
+//            oldSessionId = (String) oldSessionObj;
+//        }
+//
+//        //拿到以前的Ip   校验ip
+//        Object oldIpObj = stringRedisTemplate.opsForHash().get(RedisKeyUtil.getUserExtraInfoKey(userId), IP);
+//        String oldIp = null;
+//
+//        if (oldIpObj != null) {
+//            oldIp = (String) oldIpObj;
+//        }
+//
+//        //判断 sessionId 如果
+//        //      为空或相等 返回null
+//        //      不相等，判断ip 如果
+//        //          为空或相等，返回null
+//        //          不相等，返回 oldSessionId
+//        if (StringUtils.isBlank(oldSessionId) || oldSessionId.equals(request.getSession().getId())) {
+//            return null;
+//        } else {
+//            if (StringUtils.isBlank(oldIp) || oldIp.equals(currentIp)) {
+//                return null;
+//            }
+//            return oldSessionId;
+//        }
+        Object session = stringRedisTemplate.opsForHash().get(RedisKeyUtil.getUserExtraInfoKey(userId), SESSION_ID);
+        Object ip = stringRedisTemplate.opsForHash().get(RedisKeyUtil.getUserExtraInfoKey(userId), IP);
+        if (session == null || ip == null) {
+            //session等于null，说明没有在其它端登录
             return null;
-        } else {
-            if (StringUtils.isBlank(oldIp) || oldIp.equals(currentIp)) {
-                return null;
-            }
-            return oldSessionId;
         }
+        //拿到其它端登录的sessionid，和ip
+        String sessionId = session.toString();
+        String ipString = ip.toString();
+        if (Objects.equals(sessionId, request.getSession().getId())) {
+            return null;
+        }else {
+            //sessionId不相等
+            if (Objects.equals(ipString, currentIp)) {
+                return null;
+            } else {
+                return sessionId;
+            }
 
+        }
     }
 
     /**
@@ -121,19 +143,24 @@ public class SessionManager {
      * @param oldSessionId
      * @param userId
      */
-    private void removeOtherSessionLoginAttribute(String oldSessionId, Long userId) {
+    public void removeOtherSessionLoginAttribute(String oldSessionId, Long userId) {
         String sessionKey = RedisKeyUtil.getSessionKey(oldSessionId);
         String sessionAttrKey = RedisKeyUtil.getSessionAttrKey(USER_LOGIN_STATE);
         //删除用户的额外信息
         Boolean userExtraInfoDelete = stringRedisTemplate.delete(RedisKeyUtil.getUserExtraInfoKey(userId));
-        Long delete = sessionRepository.getSessionRedisOperations().opsForHash().delete(sessionKey, sessionAttrKey);
+//        Long delete = sessionRepository.getSessionRedisOperations().opsForHash().delete(sessionKey,sessionAttrKey);
 
-        log.info("oldSessionId:{} ,user extra info delete result:{},user login state delete result:{}"
+        Long delete = stringRedisTemplate.opsForHash().delete(sessionKey, sessionAttrKey);
+
+        log.info("!!!oldSessionId:{} ,user extra info delete result:{},user login state delete result:{}"
+                , oldSessionId, userExtraInfoDelete, delete);
+        log.info("!!!oldSessionId:{} ,user extra info delete result:{},user login state delete result:{}"
+                , oldSessionId, userExtraInfoDelete, delete);
+        log.info("!!!oldSessionId:{} ,user extra info delete result:{},user login state delete result:{}"
                 , oldSessionId, userExtraInfoDelete, delete);
 
 
     }
-
 
 
     /**
@@ -151,7 +178,7 @@ public class SessionManager {
             User user = userLoginRedisInfo.getUser();
 
             //存储登录态
-            session.setAttribute(key, user);
+            session.setAttribute(USER_LOGIN_STATE, user);
 
             //存储sessionId 和 ip 信息
             String sessionId = session.getId();
@@ -188,6 +215,7 @@ public class SessionManager {
     public void removeAttribute(HttpServletRequest request, String key) {
         HttpSession session = request.getSession();
         session.removeAttribute(key);
+
     }
 
     /**
@@ -198,10 +226,9 @@ public class SessionManager {
     public void logout(HttpServletRequest request) {
         User loginUser = userService.getCurrentUser(request);
         removeAttribute(request, USER_LOGIN_STATE);
+
         stringRedisTemplate.delete(RedisKeyUtil.getUserExtraInfoKey(loginUser.getId()));
     }
-
-
 
 
 }

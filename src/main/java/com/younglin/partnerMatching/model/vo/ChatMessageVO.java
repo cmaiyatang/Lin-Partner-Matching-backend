@@ -9,7 +9,7 @@ import java.util.Date;
 public class ChatMessageVO {
 
     /**
-     * 是否为自己发送的消息
+     * 是否为登录用户发送的消息
      */
     private Boolean isMy;
 
@@ -22,6 +22,11 @@ public class ChatMessageVO {
      * 消息接收者对象
      */
     private WebsocketVO friendUser;
+
+    /**
+     * 消息类型
+     */
+    private Integer chatType;
 
     /**
      * 消息内容

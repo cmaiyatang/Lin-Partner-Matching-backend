@@ -9,6 +9,7 @@
             <result property="userId" column="userId" jdbcType="BIGINT"/>
             <result property="friendId" column="friendId" jdbcType="BIGINT"/>
             <result property="message" column="message" jdbcType="VARCHAR"/>
+            <result property="chatType" column="chatType" jdbcType="TINYINT"/>
             <result property="sendTime" column="sendTime" jdbcType="TIMESTAMP"/>
             <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
@@ -17,7 +18,7 @@
 
     <sql id="Base_Column_List">
         id,userId,friendId,
-        message,sendTime,createTime,
+        message,chatType,sendTime,createTime,
         updateTime,isDelete
     </sql>
 </mapper>

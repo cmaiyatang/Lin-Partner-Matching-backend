@@ -2,23 +2,22 @@ package com.younglin.partnerMatching.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fasterxml.jackson.databind.ser.Serializers;
 import com.younglin.partnerMatching.common.BaseResponse;
 import com.younglin.partnerMatching.common.ErrorCode;
 import com.younglin.partnerMatching.common.ResultUtils;
 import com.younglin.partnerMatching.exception.BusinessException;
+import com.younglin.partnerMatching.manager.SessionManager;
 import com.younglin.partnerMatching.model.domain.User;
 import com.younglin.partnerMatching.model.request.UserRequest.UserLoginRequest;
 import com.younglin.partnerMatching.model.request.UserRequest.UserRegisterRequest;
 import com.younglin.partnerMatching.model.request.UserRequest.UserUpdateRequest;
-import com.younglin.partnerMatching.model.vo.UserVo;
+import com.younglin.partnerMatching.model.vo.UserVO;
 import com.younglin.partnerMatching.service.ChatUserLinkService;
 import com.younglin.partnerMatching.service.FriendService;
 import com.younglin.partnerMatching.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.CollectionUtils;
@@ -26,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.websocket.server.PathParam;
+import javax.websocket.Session;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -47,6 +46,9 @@ public class UserController {
 
     @Resource
     private FriendService friendService;
+
+    @Resource
+    private SessionManager sessionManager;
 
     @Resource
     private ChatUserLinkService chatUserLinkService;
@@ -84,7 +86,7 @@ public class UserController {
      * @return
      */
     @GetMapping("/{id}")
-    public BaseResponse<UserVo> searchUserById(@PathVariable(value = "id") Long userId) {
+    public BaseResponse<UserVO> searchUserById(@PathVariable(value = "id") Long userId) {
 
         if (userId == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
@@ -95,7 +97,7 @@ public class UserController {
             throw new BusinessException(ErrorCode.NULL_ERROR, "用户不存在");
         }
 
-        UserVo userVo = new UserVo();
+        UserVO userVo = new UserVO();
         BeanUtils.copyProperties(user, userVo);
 
         return ResultUtils.success(userVo);
@@ -134,8 +136,10 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
-        int result = userService.userLogout(request);
-        return ResultUtils.success(result);
+//        int result = userService.userLogout(request);
+        sessionManager.logout(request);
+
+        return ResultUtils.success(1);
     }
 
     /**
@@ -185,11 +189,11 @@ public class UserController {
      * @return
      */
     @GetMapping("/search/tags")
-    public BaseResponse<List<User>> searchUsersByTags(@RequestParam(required = false) List<String> tagNameList) {
+    public BaseResponse<List<UserVO>> searchUsersByTags(@RequestParam(required = false) List<String> tagNameList) {
         if (CollectionUtils.isEmpty(tagNameList)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        List<User> userList = userService.searchUserByTags(tagNameList);
+        List<UserVO> userList = userService.searchUserByTags(tagNameList);
 
         return ResultUtils.success(userList);
 
@@ -226,16 +230,18 @@ public class UserController {
      * @return
      */
     @GetMapping("/currentUser")
-    public BaseResponse<UserVo> getCurrentUser(HttpServletRequest request) {
+    public BaseResponse<UserVO> getCurrentUser(HttpServletRequest request) {
 
         User currentUser = userService.getCurrentUser(request);
 
-        UserVo userVo = new UserVo();
+        UserVO userVo = new UserVO();
         //获取好友的id
         String friendIdsJSON = friendService.searchFriendIds(currentUser.getId());
 
         BeanUtils.copyProperties(currentUser, userVo);
-        userVo.setFriendIds(friendIdsJSON);
+        if (friendIdsJSON != null) {
+            userVo.setFriendIds(friendIdsJSON);
+        }
 
         return ResultUtils.success(userVo);
     }

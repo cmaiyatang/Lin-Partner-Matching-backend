@@ -17,6 +17,11 @@ public class MessageSendRequest {
     private Long friendId;
 
     /**
+     * 聊天类型 0-好友 1-队伍
+     */
+    private Integer chatType;
+
+    /**
      * 消息内容
      */
     private String message;

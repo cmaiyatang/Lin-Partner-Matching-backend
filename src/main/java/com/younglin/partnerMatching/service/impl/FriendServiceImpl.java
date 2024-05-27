@@ -9,7 +9,7 @@ import com.younglin.partnerMatching.mapper.UserMapper;
 import com.younglin.partnerMatching.model.domain.ChatUserLink;
 import com.younglin.partnerMatching.model.domain.User;
 import com.younglin.partnerMatching.model.request.UserRequest.FriendQueryRequest;
-import com.younglin.partnerMatching.model.vo.UserVo;
+import com.younglin.partnerMatching.model.vo.UserVO;
 import com.younglin.partnerMatching.service.ChatUserLinkService;
 import com.younglin.partnerMatching.service.FriendService;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +43,7 @@ public class FriendServiceImpl extends ServiceImpl<UserMapper, User>
      * @return
      */
     @Override
-    public List<UserVo> searchFriends(FriendQueryRequest friendQueryRequest) {
+    public List<UserVO> searchFriends(FriendQueryRequest friendQueryRequest) {
         if (friendQueryRequest == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
@@ -76,19 +76,19 @@ public class FriendServiceImpl extends ServiceImpl<UserMapper, User>
         }
 
         // 遍历 friends 集合，并转换为 UserVo 对象
-        List<UserVo> friendUserVoList = new ArrayList<>();
+        List<UserVO> friendUserVOList = new ArrayList<>();
         for (User friend : friends) {
             // 创建新的 UserVo 对象
-            UserVo friendUserVo = new UserVo();
+            UserVO friendUserVO = new UserVO();
 
             // 复制 friend 对象的属性到 friendUserVo 对象
-            BeanUtils.copyProperties(friend, friendUserVo);
+            BeanUtils.copyProperties(friend, friendUserVO);
 
             // 将转换后的 UserVo 对象添加到列表中
-            friendUserVoList.add(friendUserVo);
+            friendUserVOList.add(friendUserVO);
         }
 
-        return friendUserVoList;
+        return friendUserVOList;
     }
 
 
@@ -108,7 +108,8 @@ public class FriendServiceImpl extends ServiceImpl<UserMapper, User>
         linkQueryWrapper.eq("userId", userId);
         List<ChatUserLink> links = chatUserLinkService.list(linkQueryWrapper);
         if (CollectionUtils.isEmpty(links)) {
-            throw new BusinessException(ErrorCode.NULL_ERROR, "还未有小伙伴哦");
+            return null;
+//            throw new BusinessException(ErrorCode.NULL_ERROR, "还未有小伙伴哦");
         }
 
         List<Long> friendIds = links.stream().map(ChatUserLink::getFriendId).collect(Collectors.toList());

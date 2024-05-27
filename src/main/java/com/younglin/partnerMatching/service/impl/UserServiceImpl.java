@@ -1,6 +1,5 @@
 package com.younglin.partnerMatching.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
@@ -9,23 +8,25 @@ import com.younglin.partnerMatching.common.ErrorCode;
 import com.younglin.partnerMatching.exception.BusinessException;
 import com.younglin.partnerMatching.manager.SessionManager;
 import com.younglin.partnerMatching.mapper.UserMapper;
-import com.younglin.partnerMatching.model.domain.ChatUserLink;
 import com.younglin.partnerMatching.model.domain.User;
 import com.younglin.partnerMatching.model.request.UserRequest.UserUpdateRequest;
-import com.younglin.partnerMatching.model.vo.UserVo;
+import com.younglin.partnerMatching.model.vo.UserVO;
 import com.younglin.partnerMatching.service.ChatUserLinkService;
 import com.younglin.partnerMatching.service.UserService;
 import com.younglin.partnerMatching.utils.AlgorithmUtils;
+import com.younglin.partnerMatching.utils.RedisKeyUtil;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -54,6 +55,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private SessionManager sessionManager;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
 
     // https://www.code-nav.cn/
@@ -220,7 +224,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * @return
      */
     @Override
-    public List<User> searchUserByTags(List<String> tagNameList) {
+    public List<UserVO> searchUserByTags(List<String> tagNameList) {
         //数据校验
         if (CollectionUtils.isEmpty(tagNameList)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -234,7 +238,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      * @param tagNameList
      * @return
      */
-    public List<User> sqlSearch(List<String> tagNameList) {
+    public List<UserVO> sqlSearch(List<String> tagNameList) {
         //设置开始时间
         long starTime = System.currentTimeMillis();
         //封装查询条件
@@ -248,9 +252,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         List<User> userList = userMapper.selectList(queryWrapper);
         log.info("sql query time = " + (System.currentTimeMillis() - starTime));
 
+        List<UserVO> userVOList = userList.stream().map(user -> {
+            UserVO userVO = new UserVO();
+            BeanUtils.copyProperties(user, userVO);
+            return userVO;
+        }).collect(Collectors.toList());
+
         //获得脱敏后的用户对象
         //返回数据
-        return userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
+        return userVOList;
     }
 
     /**
@@ -296,8 +306,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     @Override
     public User getCurrentUser(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Object userObj = session.getAttribute(USER_LOGIN_STATE);
+//        Object userObj = stringRedisTemplate.opsForHash().get(sessionKey, sessionAttrKey);
 
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User) userObj;
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN);
@@ -441,7 +453,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         return finalUserList;
     }
-
 
 
 }

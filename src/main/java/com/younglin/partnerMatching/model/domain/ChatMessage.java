@@ -38,6 +38,11 @@ public class ChatMessage implements Serializable {
     private String message;
 
     /**
+     * 消息类型 0-好友 1-队伍
+     */
+    private Integer chatType;
+
+    /**
      * 消息发送时间
      */
     private Date sendTime;

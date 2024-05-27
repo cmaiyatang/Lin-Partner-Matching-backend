@@ -58,36 +58,16 @@ create table user_team
     comment '用户队伍关系';
 
 /**
-  聊天界面表
- */
-create table chat_page
-(
-    id             bigint auto_increment comment 'id' primary key,
-    senderId       bigint                              not null comment '消息发送用户id',
-    recevierId     bigint                              not null comment '消息接收用户id',
-    senderOnline   tinyint                             null comment '发送者是否在线 1-在线 0-下线',
-    recevierOnline tinyint                             null comment '接收者是否在线 1-在线 0-下线',
-    isRead         tinyint                             null comment '消息是否已读 1-已读 0-未读',
-
-    createTime     timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-    updateTime     timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
-    isDelete       tinyint   default 0                 not null comment '是否删除'
-
-)
-    comment '聊天界面表';
-/**
   聊天内容详情表
  */
 create table chat_message
 (
     id         bigint auto_increment comment 'id' primary key,
-    senderId   bigint                              not null comment '消息发送用户id',
-    recevierId bigint                              not null comment '消息接收用户id',
+    userId   bigint                              not null comment '消息发送用户id',
+    friendId bigint                              not null comment '消息接收用户id',
     message    varchar(512)                        null comment '消息接收用户id',
+    chatType   tinyint                             null comment '消息类型 0-好友 1-队伍',
     sendTime   TIMESTAMP                           null comment '消息发送时间',
-    type       int                                 null comment '消息类型 ',
-    isLatest   tinyint                             null comment '是否是最后一条 1-是 0-不是',
-
     createTime timestamp default CURRENT_TIMESTAMP null comment '创建时间',
     updateTime timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
     isDelete   tinyint   default 0                 not null comment '是否删除'
@@ -102,8 +82,8 @@ create table chat_message
 create table chat_user_link
 (
     id             bigint auto_increment comment 'id' primary key,
-    senderId       bigint                              not null comment '消息发送用户id',
-    recevierId     bigint                              not null comment '消息接收用户id',
+    userId       bigint                              not null comment '消息发送用户id',
+    friendId     bigint                              not null comment '消息接收用户id',
 
     createTime     timestamp default CURRENT_TIMESTAMP null comment '创建时间',
     updateTime     timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,

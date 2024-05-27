@@ -15,7 +15,7 @@ import com.younglin.partnerMatching.model.request.DeleteRequest;
 import com.younglin.partnerMatching.model.request.TeamRequest.TeamAddRequest;
 import com.younglin.partnerMatching.model.request.TeamRequest.TeamJoinRequest;
 import com.younglin.partnerMatching.model.request.TeamRequest.TeamUpdateRequest;
-import com.younglin.partnerMatching.model.vo.TeamUserVo;
+import com.younglin.partnerMatching.model.vo.TeamUserVO;
 import com.younglin.partnerMatching.service.TeamService;
 import com.younglin.partnerMatching.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -125,20 +125,20 @@ public class TeamController {
      * @return
      */
     @GetMapping("/list/page")
-    public BaseResponse<IPage<TeamUserVo>> getTeamListPage(SearchTeamDto searchTeamDto, HttpServletRequest request) {
+    public BaseResponse<IPage<TeamUserVO>> getTeamListPage(SearchTeamDto searchTeamDto, HttpServletRequest request) {
 
         if (searchTeamDto == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         boolean isAdmin = userService.isAdmin(request);
         User currentUser = userService.getCurrentUser(request);
-        IPage<TeamUserVo> teamList = teamService.searchTeams(searchTeamDto, isAdmin);
+        IPage<TeamUserVO> teamList = teamService.searchTeams(searchTeamDto, isAdmin);
 
-        List<TeamUserVo> teamRecords = teamList.getRecords();
+        List<TeamUserVO> teamRecords = teamList.getRecords();
 
-        List<TeamUserVo> teamUserVoList = setHasJoinAndJoinNum(teamRecords, currentUser);
+        List<TeamUserVO> teamUserVOList = setHasJoinAndJoinNum(teamRecords, currentUser);
 
-        return ResultUtils.success(teamList.setRecords(teamUserVoList));
+        return ResultUtils.success(teamList.setRecords(teamUserVOList));
     }
 
 //    /**
@@ -235,7 +235,7 @@ public class TeamController {
      * @return
      */
     @GetMapping("/myTeam")
-    public BaseResponse<List<TeamUserVo>> getMyTeam(HttpServletRequest request) {
+    public BaseResponse<List<TeamUserVO>> getMyTeam(HttpServletRequest request) {
         if (request == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
         }
@@ -248,10 +248,10 @@ public class TeamController {
         searchTeamDto.setPageSize(8);
 
 //        List<TeamUserVo> orimyTeamList = teamService.searchTeams(searchTeamDto, true);
-        IPage<TeamUserVo> teamUserVoIPage = teamService.searchTeams(searchTeamDto, true);
-        List<TeamUserVo> orimyTeamList = teamUserVoIPage.getRecords();
+        IPage<TeamUserVO> teamUserVoIPage = teamService.searchTeams(searchTeamDto, true);
+        List<TeamUserVO> orimyTeamList = teamUserVoIPage.getRecords();
 
-        List<TeamUserVo> myTeamList = setHasJoinAndJoinNum(orimyTeamList, currentUser);
+        List<TeamUserVO> myTeamList = setHasJoinAndJoinNum(orimyTeamList, currentUser);
 
         return ResultUtils.success(myTeamList);
     }
@@ -263,7 +263,7 @@ public class TeamController {
      * @return
      */
     @GetMapping("/myJoinTeam")
-    public BaseResponse<List<TeamUserVo>> getMyJoinTeam(HttpServletRequest request) {
+    public BaseResponse<List<TeamUserVO>> getMyJoinTeam(HttpServletRequest request) {
         if (request == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
         }
@@ -293,11 +293,11 @@ public class TeamController {
 
         //复用查询队伍列表的方法
 //        List<TeamUserVo> curmyJoinTeamList = teamService.searchTeams(searchTeamDto, true);
-        IPage<TeamUserVo> teamUserVoIPage = teamService.searchTeams(searchTeamDto, true);
-        List<TeamUserVo> curmyJoinTeamList = teamUserVoIPage.getRecords();
+        IPage<TeamUserVO> teamUserVoIPage = teamService.searchTeams(searchTeamDto, true);
+        List<TeamUserVO> curmyJoinTeamList = teamUserVoIPage.getRecords();
 
 
-        List<TeamUserVo> myJoinTeamList = setHasJoinAndJoinNum(curmyJoinTeamList, currentUser);
+        List<TeamUserVO> myJoinTeamList = setHasJoinAndJoinNum(curmyJoinTeamList, currentUser);
 
         return ResultUtils.success(myJoinTeamList);
 
@@ -311,15 +311,15 @@ public class TeamController {
      * @return
      */
     @GetMapping("/userNumHasJoinTeam")
-    public Map<Long, Integer> setHasJoinNum(List<TeamUserVo> teamList) {
+    public Map<Long, Integer> setHasJoinNum(List<TeamUserVO> teamList) {
         if (teamList == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
 
-        List<TeamUserVo> teamUserVoList = teamService.setHasJoinNum(teamList);
+        List<TeamUserVO> teamUserVOList = teamService.setHasJoinNum(teamList);
 
         Map<Long, Integer> teamHasJoinNum = new HashMap<>();
-        for (TeamUserVo team : teamUserVoList) {
+        for (TeamUserVO team : teamUserVOList) {
             Integer hasJoinNum = team.getHasJoinNum();
             Long teamId = team.getId();
             teamHasJoinNum.put(teamId, hasJoinNum);
@@ -330,10 +330,10 @@ public class TeamController {
     }
 
     //设置队伍TeamUserVo的加入人数hasJoinNum和当前登录用户是否已加入hasJoin
-    public List<TeamUserVo> setHasJoinAndJoinNum(List<TeamUserVo> teamUserVoList, User currentUser) {
+    public List<TeamUserVO> setHasJoinAndJoinNum(List<TeamUserVO> teamUserVOList, User currentUser) {
 
         //判断登录用户是否已加入队伍，hasJoin 方便前端队伍按钮展示
-        List<Long> teamIdList = teamUserVoList.stream().map(TeamUserVo::getId).collect(Collectors.toList());
+        List<Long> teamIdList = teamUserVOList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
 
         //查询当前用户已加入的队伍id
         QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
@@ -347,7 +347,7 @@ public class TeamController {
             List<Long> userHasJoinTeamIdList = userHasJoinTeamList.stream().map(UserTeam::getTeamId).collect(Collectors.toList());
 
             //遍历所有队伍，判断用户已加入的队伍id是否包含队伍的id
-            teamUserVoList.forEach(team -> {
+            teamUserVOList.forEach(team -> {
                 boolean contains = userHasJoinTeamIdList.contains(team.getId());
                 team.setHasJoin(contains);
             });
@@ -355,7 +355,7 @@ public class TeamController {
         }
 
         //设置每个队伍已加入的人数
-        List<TeamUserVo> teamList = teamService.setHasJoinNum(teamUserVoList);
+        List<TeamUserVO> teamList = teamService.setHasJoinNum(teamUserVOList);
 
         return teamList;
     }

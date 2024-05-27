@@ -3,7 +3,7 @@ package com.younglin.partnerMatching.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.younglin.partnerMatching.model.domain.User;
 import com.younglin.partnerMatching.model.request.UserRequest.FriendQueryRequest;
-import com.younglin.partnerMatching.model.vo.UserVo;
+import com.younglin.partnerMatching.model.vo.UserVO;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public interface FriendService extends IService<User> {
      * 查询伙伴
      * @return
      */
-    List<UserVo> searchFriends(FriendQueryRequest friendQueryRequest);
+    List<UserVO> searchFriends(FriendQueryRequest friendQueryRequest);
 
     /**
      * 查询伙伴的id

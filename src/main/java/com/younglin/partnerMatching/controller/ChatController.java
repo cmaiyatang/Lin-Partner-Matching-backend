@@ -13,6 +13,7 @@ import com.younglin.partnerMatching.model.request.ChatRequest.ChatConnectRequest
 import com.younglin.partnerMatching.model.request.ChatRequest.ChatDeleteRequest;
 import com.younglin.partnerMatching.model.request.ChatRequest.MessageGetReqeust;
 import com.younglin.partnerMatching.model.vo.ChatMessageVO;
+import com.younglin.partnerMatching.model.vo.ChatTeamMessageVO;
 import com.younglin.partnerMatching.service.ChatMessageService;
 import com.younglin.partnerMatching.service.ChatUserLinkService;
 import com.younglin.partnerMatching.service.UserService;
@@ -115,8 +116,14 @@ public class ChatController {
         return ResultUtils.success(friendList);
     }
 
+    /**
+     * 获取好友聊天记录
+     * @param messageGetReqeust
+     * @param request
+     * @return
+     */
     @PostMapping("/privateChatMessage")
-    public BaseResponse<List<ChatMessageVO>> getMessage(@RequestBody MessageGetReqeust messageGetReqeust, HttpServletRequest request) {
+    public BaseResponse<List<ChatMessageVO>> getFriendMessage(@RequestBody MessageGetReqeust messageGetReqeust, HttpServletRequest request) {
         if (messageGetReqeust == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
@@ -131,8 +138,25 @@ public class ChatController {
         return ResultUtils.success(chatRecord);
     }
 
+    /**
+     * 获取队伍聊天室聊天记录
+     * @param messageGetReqeust
+     * @return
+     */
+    @PostMapping("/teamChatMessage")
+    public BaseResponse<List<ChatTeamMessageVO>> getTeamRoomMessage(@RequestBody MessageGetReqeust messageGetReqeust,HttpServletRequest request){
+        if (messageGetReqeust == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        Long userId = messageGetReqeust.getUserId();
+        Long friendId = messageGetReqeust.getFriendId();
+        User currentUser = userService.getCurrentUser(request);
 
-}
+        List<ChatTeamMessageVO> teamChatMessage = chatMessageService.getTeamChatMessage(userId, friendId, currentUser);
+
+        return ResultUtils.success(teamChatMessage);
+    }
+ }
 
 
 

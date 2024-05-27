@@ -1,8 +1,5 @@
 package com.younglin.partnerMatching.model.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
 import java.util.Date;
@@ -12,7 +9,7 @@ import java.util.Date;
  * 用户-队伍数据视图类
  */
 @Data
-public class TeamUserVo {
+public class TeamUserVO {
 
     /**
      * id
@@ -62,7 +59,7 @@ public class TeamUserVo {
     /**
      * 创建人用户信息
      */
-    private UserVo createUser;
+    private UserVO createUser;
 
     /**
      * 已加入的用户数
