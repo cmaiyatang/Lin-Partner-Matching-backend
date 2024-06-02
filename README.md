@@ -31,13 +31,15 @@
 
 ​	3.如果执行方法的时候锁过期了
 
-  // 每天执行，预热推荐用户
-    @Scheduled(cron = "0 5 23 * * *")   //自己设置时间测试
+  // 每天执行，预热推荐用户 //自己设置时间测试
+  
+    @Scheduled(cron = "0 5 23 * * *")   
     public void doCacheRecommendUser() {
         RLock lock = redissonClient.getLock("younglin:precachejob:docache:lock");
 
         try {
             // 只有一个线程能获取到锁
+            
             if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
                 System.out.println("getLock: " + Thread.currentThread().getId());
                 for (Long userId : mainUserList) {
@@ -58,6 +60,7 @@
             log.error("doCacheRecommendUser error", e);
         } finally {
             // 只能释放自己的锁
+            
             if (lock.isHeldByCurrentThread()) {
                 System.out.println("unLock: " + Thread.currentThread().getId());
                 lock.unlock();
