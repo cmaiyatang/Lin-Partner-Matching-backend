@@ -67,7 +67,78 @@
             }
         }
 
-**  问题:**
+## 前端跨域问题
+
+**浏览器的同源策略，安全** **只会在前端发生！！！，如果后端使用HttpClient调用不会发生异常**
+
+协议，域名（ip地址），端口号
+
+这三个任意一个不同都是造成跨域
+
+浏览器已经请求的后端，但后端没有返回 access-cros的响应头，浏览器不接受
+
+**后端解决方式**
+
+1.@cros注解
+
+2.定义配置类
+
+3.@Bean filter
+
+前端解决：
+
+请求拦截器，加上allow-cros- *
+
+
+
+**还可以配置nginx将请求转发到后端**
+
+配置了nginx反向代理后监听的是80端口   http://ip地址:80   不写80默认的是80端口，
+
+前端的baseUrl不需要加:8080   
+
+```js
+'http://8.134.203.235/api',
+```
+
+```nginx
+#PROXY-START/
+
+location ^~ /api/
+{
+    proxy_pass http://8.134.203.235:8080;
+    proxy_set_header Host 8.134.203.235;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header REMOTE-HOST $remote_addr;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_http_version 1.1;
+    # proxy_hide_header Upgrade;
+
+    add_header X-Cache $upstream_cache_status;
+
+    #Set Nginx Cache
+    
+    
+    set $static_fileL6YroQSB 0;
+    if ( $uri ~* "\.(gif|png|jpg|css|js|woff|woff2)$" )
+    {
+    	set $static_fileL6YroQSB 1;
+    	expires 1m;
+        }
+    if ( $static_fileL6YroQSB = 0 )
+    {
+    add_header Cache-Control no-cache;
+    }
+}
+
+#PROXY-END/
+```
+
+地址有api时nginx会帮我们调用http://8.134.203.235:8080/api/ 接口
+
+**问题:**
   
   **1.多服务器session共享问题**
 ​	当服务部署在多台服务器中时，用户请求通过Nginx服务器反向代理加负载均衡的方式分发到不同的服务器，但如果用户先访问的服务器A，此时，session保存在服务器A中，下次请求客户端携带cookie访问另外一台服务器的时候服务器B并不认识用户，也就拿不到保存在session中的信息
