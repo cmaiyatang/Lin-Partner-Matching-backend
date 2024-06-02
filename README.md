@@ -1,3 +1,10 @@
+介绍:
+  实现好友/队伍聊天功能,用户可以寻找小伙伴,建立小队.
+用户主页
+![image](https://github.com/cmaiyatang/Lin-Partner-Matching-backend/assets/127107267/076c2a84-e63d-47b9-a3e8-7128a666723c)
+
+
+
 数据库表设计
 
 /**
