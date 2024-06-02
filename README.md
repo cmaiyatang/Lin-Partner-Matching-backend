@@ -1,6 +1,8 @@
 数据库表设计
 
-一.用户标签包
+/**
+  用户标签表
+ */
     id         bigint auto_increment comment '标签id'
         primary key,
     tagName    varchar(256)                        null comment '标签名称',
