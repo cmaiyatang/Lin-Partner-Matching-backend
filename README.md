@@ -1,9 +1,12 @@
 介绍:
   实现好友/队伍聊天功能,用户可以寻找小伙伴,建立小队.
   
-![image](https://github.com/cmaiyatang/Lin-Partner-Matching-backend/assets/127107267/36e24a84-3da4-45b8-82d0-37d27f4a2eeb)
-![image](https://github.com/cmaiyatang/Lin-Partner-Matching-backend/assets/127107267/70e7ca9d-2117-45f3-bdf4-e2a8a85f385e)
-![image](https://github.com/cmaiyatang/Lin-Partner-Matching-backend/assets/127107267/25159771-a4dc-4072-8c58-d1a5095e4cc7)
+![image](https://github.com/cmaiyatang/Lin-Partner-Matching-backend/assets/127107267/fd0c6dc1-1e92-45d8-b944-1666fd8bb090)
+![image](https://github.com/cmaiyatang/Lin-Partner-Matching-backend/assets/127107267/c419b6e2-bb4d-4127-940e-724eb519ced8)
+![image](https://github.com/cmaiyatang/Lin-Partner-Matching-backend/assets/127107267/74b2ad76-8b04-408e-b074-d472b3fb7c5b)
+![image](https://github.com/cmaiyatang/Lin-Partner-Matching-backend/assets/127107267/45be4549-152e-4661-9349-659278619b7c)
+![image](https://github.com/cmaiyatang/Lin-Partner-Matching-backend/assets/127107267/26ae493d-bf23-495c-b9c4-68256b2a219f)
+
 
 
 
