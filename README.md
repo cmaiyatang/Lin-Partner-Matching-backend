@@ -26,7 +26,6 @@
     updateTime timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
     isDelete   int       default 0                 not null comment '是否删除 0 ',
         
-
 /**
   队伍表
  */
@@ -41,10 +40,6 @@
     status      int       default 0                 not null comment '0-公开，1-私有，2-加密',
     password    varchar(512) comment '用户id'       null comment '密码',
 
-    createTime  timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-    updateTime  timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
-    isDelete    tinyint   default 0                 not null comment '是否删除'
-
 /**
   用户-队伍表
  */
@@ -53,11 +48,6 @@
     userId     bigint                              null comment '用户id',
     teamId     bigint                              null comment '队伍id',
     joinTime   datetime                            null comment '用户加入时间',
-
-    createTime timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-    updateTime timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
-    isDelete   tinyint   default 0                 not null comment '是否删除'
-
 
 /**
   聊天内容详情表
@@ -69,10 +59,6 @@
     message    varchar(512)                        null comment '消息接收用户id',
     chatType   tinyint                             null comment '消息类型 0-好友 1-队伍',
     sendTime   TIMESTAMP                           null comment '消息发送时间',
-    createTime timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-    updateTime timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
-    isDelete   tinyint   default 0                 not null comment '是否删除'
-
 
 /**
   聊天用户关系表
@@ -82,7 +68,23 @@
     userId       bigint                              not null comment '消息发送用户id',
     friendId     bigint                              not null comment '消息接收用户id',
 
-    createTime     timestamp default CURRENT_TIMESTAMP null comment '创建时间',
-    updateTime     timestamp default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP,
-    isDelete       tinyint   default 0                 not null comment '是否删除'
 
+问题:
+  1.多服务器session共享问题
+​	当服务部署在多台服务器中时，用户请求通过Nginx服务器反向代理加负载均衡的方式分发到不同的服务器，但如果用户先访问的服务器A，此时，session保存在服务器A中，下次请求客户端携带cookie访问另外一台服务器的时候服务器B并不认识用户，也就拿不到保存在session中的信息
+
+​	如何解决：
+
+​	1.中间件，可以将session存储在中间件中，如Redis，MySQL，每台服务器都从Redis中取出session，Spring-data-session    
+
+​	缺点：依赖性太强，如果这个中间件挂掉了，大家都无法工作，当然也可以部署多台中间件
+
+​	2.服务器之间通过网络通信共享sessino，会增加每台服务器的网络开销，不推荐
+
+​	3.通过memcache同步session，
+
+![image-20240530094840843](C:\Users\chenyanglin\AppData\Roaming\Typora\typora-user-images\image-20240530094840843.png)
+
+
+
+ 
