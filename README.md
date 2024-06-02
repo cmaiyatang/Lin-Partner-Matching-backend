@@ -3,6 +3,7 @@
 /**
   用户标签表
  */
+ 
     id         bigint auto_increment comment '标签id'
         primary key,
     tagName    varchar(256)                        null comment '标签名称',
@@ -64,6 +65,7 @@
 /**
   聊天用户关系表
  */
+ 
     id             bigint auto_increment comment 'id' primary key,
     userId       bigint                              not null comment '消息发送用户id',
     friendId     bigint                              not null comment '消息接收用户id',
