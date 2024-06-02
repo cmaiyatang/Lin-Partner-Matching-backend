@@ -31,6 +31,39 @@
 
 ​	3.如果执行方法的时候锁过期了
 
+  // 每天执行，预热推荐用户
+    @Scheduled(cron = "0 5 23 * * *")   //自己设置时间测试
+    public void doCacheRecommendUser() {
+        RLock lock = redissonClient.getLock("younglin:precachejob:docache:lock");
+
+        try {
+            // 只有一个线程能获取到锁
+            if (lock.tryLock(0, -1, TimeUnit.MILLISECONDS)) {
+                System.out.println("getLock: " + Thread.currentThread().getId());
+                for (Long userId : mainUserList) {
+                    //查数据库
+                    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+                    Page<User> userPage = userService.page(new Page<>(1, 20), queryWrapper);
+                    String redisKey = String.format("younglin:user:recommend:%s", mainUserList);
+                    ValueOperations valueOperations = redisTemplate.opsForValue();
+                    //写缓存,30s过期
+                    try {
+                        valueOperations.set(redisKey, userPage, 30000, TimeUnit.MILLISECONDS);
+                    } catch (Exception e) {
+                        log.error("redis set key error", e);
+                    }
+                }
+            }
+        } catch (InterruptedException e) {
+            log.error("doCacheRecommendUser error", e);
+        } finally {
+            // 只能释放自己的锁
+            if (lock.isHeldByCurrentThread()) {
+                System.out.println("unLock: " + Thread.currentThread().getId());
+                lock.unlock();
+            }
+        }
+
 **  问题:**
   
   **1.多服务器session共享问题**
